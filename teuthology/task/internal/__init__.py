@@ -365,7 +365,8 @@ def fetch_binaries_for_coredumps(path, remote):
             remote._sftp_get_file(remote_path, local_path)
 
             # Pull Debug symbols:
-            debug_path = os.path.join('/usr/lib/debug', remote_path)
+            debug_path = os.path.join('/usr/lib/debug',
+                                      remote_path.lstrip(os.path.sep))
 
             # RPM distro's append their non-stripped ELF's with .debug
             # When deb based distro's do not.
