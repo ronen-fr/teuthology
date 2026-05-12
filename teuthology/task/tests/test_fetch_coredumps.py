@@ -135,8 +135,9 @@ class TestFetchCoreDumps(object):
         m_os.listdir.return_value = [self.core_dump_path]
         self.the_function(None, self.m_remote)
         assert self.m_remote._sftp_get_file.called
-        # Should NOT have called 'which' since execfn provides an absolute path
-        self.m_remote.sh.assert_not_called()
+        # Should have called readlink but NOT 'which'
+        self.m_remote.sh.assert_called_once_with(
+            ['readlink', '-f', '/usr/bin/crimson-osd'])
 
     def teardown(self):
         os.remove(self.core_dump_path)

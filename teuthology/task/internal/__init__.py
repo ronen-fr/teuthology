@@ -364,6 +364,16 @@ def fetch_binaries_for_coredumps(path, remote):
                 os.makedirs(local_dir)
             remote._sftp_get_file(remote_path, local_path)
 
+            # Resolve symlinks (e.g. update-alternatives) so the
+            # debug path matches the debuginfo package contents.
+            try:
+                resolved_path = remote.sh(
+                    ['readlink', '-f', remote_path]).rstrip()
+                if resolved_path:
+                    remote_path = resolved_path
+            except Exception:
+                pass
+
             # Pull Debug symbols:
             debug_path = os.path.join('/usr/lib/debug',
                                       remote_path.lstrip(os.path.sep))
