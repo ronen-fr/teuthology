@@ -375,15 +375,26 @@ def fetch_binaries_for_coredumps(path, remote):
                 pass
 
             # Pull Debug symbols:
-            debug_path = os.path.join('/usr/lib/debug',
-                                      remote_path.lstrip(os.path.sep))
+            debug_dir = os.path.dirname(os.path.join(
+                '/usr/lib/debug', remote_path.lstrip(os.path.sep)))
+            binary_name = os.path.basename(remote_path)
 
-            # RPM distro's append their non-stripped ELF's with .debug
-            # When deb based distro's do not.
             if remote.system_type == 'rpm':
-                debug_path = '{debug_path}.debug'.format(debug_path=debug_path)
+                # RPM debuginfo packages may include the version-release-arch
+                # in the filename, so use find to locate the debug file.
+                find_out = remote.sh([
+                    'find', debug_dir, '-maxdepth', '1',
+                    '-name', f'{binary_name}*.debug',
+                ]).rstrip()
+                if find_out:
+                    debug_path = find_out.splitlines()[0]
+                else:
+                    debug_path = os.path.join(debug_dir,
+                                              f'{binary_name}.debug')
+            else:
+                debug_path = os.path.join(debug_dir, binary_name)
 
-            remote.get_file(debug_path, coredump_path)
+            remote.get_file(debug_path, dest_dir=coredump_path)
 
 
 def gzip_if_too_large(compress_min_size, src, tarinfo, local_path):
