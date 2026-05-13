@@ -334,27 +334,16 @@ def fetch_binaries_for_coredumps(path, remote):
                     log.error(e)
                     continue
             try:
-                # Prefer execfn (the actual file passed to execve) over
-                # the 'from' field (argv[0], which can be overridden,
-                # e.g. crimson-osd launched with argv[0]='ceph-osd').
-                execfn_match = re.findall(r"execfn:\s*'([^']+)'", dump_out)
-                if execfn_match:
-                    dump_program = execfn_match[0]
-                    log.info(f' dump_program (from execfn): {dump_program}')
-                else:
-                    dump_command = re.findall("from '([^ ']+)", dump_out)[0]
-                    dump_program = dump_command.split()[0]
-                    log.info(f' dump_program: {dump_program}')
+                dump_command = re.findall("from '([^ ']+)", dump_out)[0]
+                dump_program = dump_command.split()[0]
+                log.info(f' dump_program: {dump_program}')
             except Exception as e:
                 log.info("core doesn't have the desired format, moving on ...")
                 log.error(e)
                 continue
 
             # Find path on remote server:
-            if os.path.isabs(dump_program):
-                remote_path = dump_program
-            else:
-                remote_path = remote.sh(['which', dump_program]).rstrip()
+            remote_path = remote.sh(['which', dump_program]).rstrip()
 
             # Pull remote program into coredump folder:
             local_path = os.path.join(coredump_path,
